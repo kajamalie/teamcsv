@@ -14,3 +14,5 @@ Resultatet:
 I loopen som kjører igjennom observasjoner har vi definert parametere. 
 Source (s_id2) identifiserer målestasjon og hentes fra databasen vår i postgres. Elementer hentes fra json filen til observasjoner fra Frost og tid fra overnevnte time_list. 
 Dersom en source kun har verdi på en av elementene, settes den manglende verdien til None. Sources som verken har temperatur eller nedbørsmåling utelukkes. 
+
+En del observasjoner har ikke måling på temperatur. Planen vår var å erstatte de som manglet måling med gjennomsnittet av verdiene til de som hadde måling. Grunnet tidsmangel ble ikke dette gjort. 
