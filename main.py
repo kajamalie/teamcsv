@@ -171,3 +171,85 @@ def get_data_trips():
 
 data5 = get_data_trips()
 data5.to_sql('stage_trips', con = engine, index=False, schema='public', if_exists='append')
+
+
+
+
+# From frost 
+
+
+
+
+
+client_id = '5a763f3f-2f05-4a3f-8ed1-bf6880cdbbb9'
+frost_root = 'https://frost.met.no/observations/v0.jsonld'
+
+
+import requests
+import psycopg2
+
+conn = psycopg2.connect(host = "ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com",
+dbname = "team_csv",
+user = "student_helene",
+password = "Gandalf!",
+port = 5432)
+
+cur = conn.cursor()  
+
+
+
+sourceid_list= []
+cur.execute("SELECT DISTINCT(weather_stat_id) from closest_weather_station;") 
+s_id = (cur.fetchall())
+s_id2 = [item for t in s_id for item in t]
+
+
+
+time_list = ['2020-09-02T00:00:00.000Z', '2020-09-02T01:00:00.000Z', '2020-09-02T02:00:00.000Z',
+             '2020-09-02T03:00:00.000Z', '2020-09-02T04:00:00.000Z', '2020-09-02T05:00:00.000Z',
+             '2020-09-02T06:00:00.000Z', '2020-09-02T07:00:00.000Z', '2020-09-02T08:00:00.000Z',
+             '2020-09-02T09:00:00.000Z', '2020-09-02T10:00:00.000Z', '2020-09-02T11:00:00.000Z',
+             '2020-09-02T12:00:00.000Z', '2020-09-02T13:00:00.000Z', '2020-09-02T14:00:00.000Z',
+             '2020-09-02T15:00:00.000Z', '2020-09-02T16:00:00.000Z', '2020-09-02T17:00:00.000Z',
+             '2020-09-02T18:00:00.000Z', '2020-09-02T19:00:00.000Z', '2020-09-02T20:00:00.000Z',
+             '2020-09-02T21:00:00.000Z', '2020-09-02T22:00:00.000Z', '2020-09-02T23:00:00.000Z',
+             ]
+
+
+
+
+for i in range(len(s_id2)):
+    source = s_id2[i]
+    print(source)
+    for j in range(len(time_list)):
+        reftime = time_list[j]
+        parameters = {
+                'sources': source,
+                'elements': 'air_temperature,sum(precipitation_amount PT1H)',
+                'referencetime': reftime
+                }
+        elements = parameters['elements'].split(',')
+        r = requests.get(frost_root, parameters, auth=(client_id,''))
+        observation = r.json()
+        
+        if r.status_code == 200:
+            print('yes')
+            vals = {}
+            for e in elements:
+               val = None
+               for o in observation['data'][0]['observations']:
+                    t = o['elementId']
+                    if t == e:
+                        val = o['value']
+                        break
+               vals[e] = val
+            query = ("INSERT INTO stage_observations (weather_stat_id, timereference, temperature, percipitation) VALUES (%s, %s, %s, %s)")        
+            values = source, reftime, vals['air_temperature'], vals['sum(precipitation_amount PT1H)']
+            try: 
+                cur.execute(query, values)  
+                conn.commit() 
+            except:
+                print('Here it messed up:')
+                print(values)
+        else:
+            print('Error! Returned status code %s' % r.status_code)
