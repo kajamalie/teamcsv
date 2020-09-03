@@ -7,7 +7,7 @@ Opprinnelig plan:
 -  temperatur (air_temperature)
 -  nedbør (sum(precipitation_amount PT1H)
 -  air pressure ( mean(surface_air_pressure PT1H)
--  mean(wind_speed PT1H)
+-  mean (wind_speed PT1H)
 Resultatet: 
 - Vi måtte innskrenke ganske kraftig. Sluttresultatet inneholder observasjoner for hver time for èn dag- 02.09.2020. Disse verdiene har vi laget manuelt i variabelen time_list. I tillegg innskrenket antall elementer for å definere vært fint vær. Fint vær beregnes nå ut fra nedbør og temperatur. 
 
