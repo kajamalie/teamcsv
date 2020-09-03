@@ -65,3 +65,6 @@ WHERE condition;
 
 ALTER TABLE csv_data.buss_stop 
    ADD column s_stop_id serial primary key;
+  
+  
+  --testint 
