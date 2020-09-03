@@ -47,6 +47,10 @@ ORDER BY 1;
 --create time-dim by hour: 
 create table csv_data.time_hour(
        date_hour varchar); 
+      
+ drop table csv_data.time_hour;
+      
+
 
 insert into csv_data.time_hour
        values 
@@ -90,39 +94,67 @@ ALTER TABLE csv_data.bus_stop
 
 
 -- create place dim: weather_station
-SELECT id, ruter_stop 
+SELECT id as source_id, name as source_name
 INTO csv_data.weather_station
-FROM public.closest_weather_station; 
+FROM public.weather_station;
 
-ALTER TABLE csv_data.weather_station 
+select * from  csv_data.weather_station ws ;
+
+--drop table csv_data.weather_station;
+
+
+
+ALTER TABLE  csv_data.weather_station
    ADD column s_weather_id serial primary key;
   
-  public.
+    
+
  -- create fact table: 
    
 create table csv_data.fact ( 
   	   fact_id serial primary key,
        s_stop_id int references  csv_data.bus_stop(s_stop_id),
        s_weather_id int references csv_data.weather_station(s_weather_id),
-       time_id varchar references csv_data.time_hour(date_hour), 
-       date_actual date references csv_data.date_time(date_actual)
+       date_hour varchar references csv_data.time_hour(date_hour), 
+       date_actual date references csv_data.date_time(date_actual),
+       temperature varchar, 
+       precipitation varchar
       ); 
      
-     
-   
      
 
 
     --start på join for å populere fact_table:
-  select ss.stop_id, csw.ruter_stop, ws.id as weather_id, bs.stop_name, ws2.s_weather_id from public.stage_stops ss
-         join public.closest_weather_station csw on ss.stop_name = csw.ruter_stop 
-         join public.weather_station ws on csw.weather_stat_id = ws.id 
-         join csv_data.bus_stop bs on ss.stop_id = bs.stop_id 
-         join csv_data.weather_station ws2 on csw.id = ws2.s_weather_id ; 
-         
-        
-
-
-
+    
+     
+     
+     
+with sourses as (select so.weather_stat_id, so.timereference, so.temperature, so.percipitation, ws.s_weather_id, csw.ruter_stop, SO.timereference 
+                 from public.stage_observations so 
+                 join csv_data.weather_station ws on so.weather_stat_id = ws.source_id
+                 join public.closest_weather_station csw on ws.source_id = csw.weather_stat_id)    
+insert into csv_data.fact (s_stop_id, s_weather_id, date_hour, date_actual, temperature, precipitation)
+            select bs.s_stop_id,  ws.s_weather_id, so.temperature, so.percipitation 
+            from sourses s
+            join csv_data.bus_stop bs on s.ruter_stop = bs.stop_name 
+            join csv_data.weather_station ws using(s_weather_id)
+            join csv_data.time_hour th on th.date_hour = s.timereference
+            join csv_data.date_time dt using(date_actual); 
+           
+       --uten tider(denne er kjørt nå):   
+           
+with sourses as (select so.weather_stat_id, so.temperature, so.percipitation, ws.s_weather_id, csw.ruter_stop 
+                 from public.stage_observations so 
+                 join csv_data.weather_station ws on so.weather_stat_id = ws.source_id
+                 join public.closest_weather_station csw on ws.source_id = csw.weather_stat_id)    
+insert into csv_data.fact (s_stop_id, s_weather_id, temperature, precipitation)
+            select bs.s_stop_id,  ws.s_weather_id, s.temperature, s.percipitation 
+            from sourses s
+            join csv_data.bus_stop bs on s.ruter_stop = bs.stop_name 
+            join csv_data.weather_station ws using(s_weather_id)
+            --join csv_data.time_hour th on th.date_hour = s.timereference
+            --join csv_data.date_time dt using(date_actual); 
+           
+  
 
 

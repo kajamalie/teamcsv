@@ -5,15 +5,14 @@ Created on Mon Aug 31 14:44:12 2020
 @author: Kaja Amalie
 """
 
-import pandas
-import os 
-import numpy as np
-import psycopg2
 
 
 #%%
 
-# Connect to your postgres DB
+import pandas
+import os 
+import numpy as np
+import psycopg2# Connect to your postgres DB
 # Connect to an existing database
 conn = psycopg2.connect(host = "ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com",
                         dbname = "team_csv",
@@ -21,7 +20,6 @@ conn = psycopg2.connect(host = "ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazon
                         password = "osama",
                         port = 5432
                        )
-
 cur = conn.cursor()
 
 conn.commit()
@@ -33,26 +31,31 @@ cur.close()
 conn.close()
 
 
+#%%
+
+#lage engine 
+
+import pandas as pd
+from sqlalchemy.types import Integer
+from sqlalchemy import create_engine
+hostname = "ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com"
+user = "student_kaja"
+password = "osama"
+dbname = "team_csv"
+constring = f"postgresql+psycopg2://{user}:{password}@{hostname}/{dbname}"
+engine = create_engine(constring, echo=False)  
+
+
+
+
+connection = engine.raw_connection()
+
 
 #%%
 
-
-#creating CSV files: 
-import csv
-import psycopg2 
-
-read_file =  stops_data
-stops_data.to_csv (r'stops_new.csv', encoding="utf-8")
-
-with stops_datas as stops_data:
-    writer = csv.writer(stops_data)
-    
-with open('stops_new.csv', 'w', encoding='UTF-8', newline='') as stops_data:
-    writer = csv.writer(stops_data)
-
-#%%
-#code carl+ fikset av meg (laget funksjon og trukket ut kun det jeg vil ha)
 #(connecting directly to API)
+# create table buss_stops:
+    
 import requests
 import os
 from zipfile import ZipFile 
@@ -73,43 +76,12 @@ def get_data_stops():
     return(stops_data)
 
 
-columns = ['stop_id','stop_name','stop_lat','stop_lon']
-d_for_sql = get_data_stops()
+
 data = get_data_stops()
-
-data2 = data.head(5)
-
-data2.to_sql('stage_stops', con=engine, if_exists='append')
-
-#%%
-
-import pandas as pd
-from sqlalchemy.types import Integer
-from sqlalchemy import create_engine
-hostname = "ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com"
-user = "student_kaja"
-password = "osama"
-dbname = "team_csv"
-constring = f"postgresql+psycopg2://{user}:{password}@{hostname}/{dbname}"
-engine = create_engine(constring, echo=False)  
-
-
-
-  
-
-connection = engine.raw_connection()
-#%%
-
-
 data.to_sql('stage_stops', con = engine, index=False, schema='public', if_exists='append')
 
 
-
-
-
-
 #%%
-
 #create table in SQL routes 
 def get_data_routes():
     url = 'https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_rut-aggregated-gtfs.zip'
@@ -131,7 +103,6 @@ data2.to_sql('stage_routes', con = engine, index=False, schema='public', if_exis
 
 
 #%%
-
 #Create table in SQL shapes 
 
 shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence,shape_dist_traveled
@@ -164,7 +135,7 @@ for i in range(0, len(my_big_dataframe), batchsize):
     
     
 #%%
-#Create table in SQL shapes 
+#Create table in SQL routs 
 
 shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence,shape_dist_traveled
 
@@ -187,13 +158,11 @@ def get_data_stop_times():
 data4 = get_data_stop_times()
 data4.to_sql('stage_stop_times', con = engine, index=False, schema='public', if_exists='append')
 
-my_big_dataframe = data4
-batchsize = 500
-for i in range(0, len(my_big_dataframe), batchsize):
-    smaller_dataframe = my_big_dataframe[i:i+batchsize]
-    smaller_dataframe.to_sql('stage_stop_times', con = engine, index=False, schema='public', if_exists='append')
+
 
 #%%
+#Create table in SQL trips 
+
 def get_data_trips():
     url = 'https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_rut-aggregated-gtfs.zip'
     myfile = requests.get(url)
@@ -209,23 +178,14 @@ def get_data_trips():
     return(trips_data)
 
 data5 = get_data_trips()
+data5.to_sql('stage_trips', con = engine, index=False, schema='public', if_exists='append')
 
 
 
 
 #%%
-def get_data_trips():
-    url = 'https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_rut-aggregated-gtfs.zip'
-    myfile = requests.get(url)
-    current_folder = os.getcwd()
-    open(current_folder + '/routes.zip', 'wb').write(myfile.content)
-    sto = pd.DataFrame()
-    with ZipFile('routes.zip') as myzip:
-        with myzip.open('trips.txt') as myfile:
-            trips = pd.read_csv(myfile)
-             columns = ['route_id', 'trip_id']  #'route_id','route_short_name','route_long_name', 'route_type']
-            #trips_data = trips[columns].copy()
-            #stop_times.to_csv('stop_times.csv') #denne lager CSV 
-    return(trips_data)
-
-data5 = get_data_trips()
+my_big_dataframe = data5
+batchsize = 1000
+for i in range(0, len(my_big_dataframe), batchsize):
+    smaller_dataframe = my_big_dataframe[i:i+batchsize]
+    smaller_dataframe.to_sql('stage_trips', con = engine, index=False, schema='public', if_exists='append')
