@@ -54,12 +54,6 @@ CREATE TABLE public.stage_stops (
 	stop_lon float8 NULL
 );
 
--- create table where weather stations in range of ruter coordinates to reduce 'search area' for closest weather station: 
-
-CREATE TABLE weather_station
-AS 
-SELECT id, name, frost_long, frost_lat from stage_sources where (frost_lat between 59.42 and 60.55) and (frost_long between 10.10  and 11.87);
-
 
 -- create table for closest weather station for each ruter stop:
 create table closest_weather_station(
@@ -68,6 +62,17 @@ create table closest_weather_station(
 	weather_stat_id text
 );
 
+-- create staging area for observations:
+
+CREATE TABLE public.stage_observations2 (
+	observation_id serial NOT NULL,
+	weather_stat_id text NULL,
+	"time" time NULL,
+	"date" text NULL,
+	temperature float8 NULL,
+	percipitation float8 NULL,
+	CONSTRAINT stage_observations2_pkey PRIMARY KEY (observation_id)
+);
 
 
 
