@@ -276,14 +276,14 @@ create table csv_data.fact (
   	   fact_id serial primary key,
        s_stop_id int references  csv_data.bus_stop(s_stop_id),
        s_weather_id int references csv_data.weather_station(s_weather_id),
-       time_hour int references csv_data.star_times(s_times_id), 
-       date_actual int references csv_data.star_date(k_date),
+       time_id int references csv_data.star_times(s_times_id), 
+       date_id int references csv_data.star_date(date_actual),
        temperature varchar, 
        precipitation varchar
       ); 
 
 
-   
+ drop table   
 
     --start på join for å populere fact_table:
 
@@ -305,15 +305,7 @@ insert into csv_data.fact (s_stop_id, s_weather_id, temperature, precipitation)
              st."hour", sd.date_actual,
            time_hour, date_actual,
            
-           
-           select * from csv_data.fact f ;
-          select * from public.stage_observations so ;
-         select * from csv_data.weather_station ws ;
-        
-        select * from csv_data.star_date sd ;
-       select * from csv_data.star_times st ;
-      
-      
+  
       
       
    with sources as (select so.weather_stat_id, so.timereference, so.temperature, so.percipitation, ws.s_weather_id, csw.ruter_stop, SO.timereference 
@@ -321,9 +313,16 @@ insert into csv_data.fact (s_stop_id, s_weather_id, temperature, precipitation)
                  join csv_data.weather_station ws on so.weather_stat_id = ws.source_id
                  join public.closest_weather_station csw on ws.source_id = csw.weather_stat_id)
         insert into csv_data.fact (s_stop_id, s_weather_id, time_hour, date_actual, temperature, precipitation)
-               from sources s
-               join 
-                 ;
+                select bs.s_stop_id, ws.s_weather_id, st.s_times_id, sd.k_date 
+                from sources s
+                join csv_data.bus_stop bs on s.ruter_stop = bs.stop_name 
+                join csv_data.weather_station ws using(s_weather_id)
+          
+                join csv_data.star_times st on 
+                join csv_data.star_date sd using(k_date)
+                 
+                
+      select * from csv_data.star_date sd ;
                 
                 
                 
