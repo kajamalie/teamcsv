@@ -244,6 +244,70 @@ cur.close()
 conn.close()
 
 #%%
+
+# find the range of coordinates ruter has stations within. 
+import psycopg2
+
+
+conn = psycopg2.connect(
+    host="ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com, dbname",
+    dbname = "team_csv", 
+    user = "student_helene", 
+    password="Gandalf!", 
+    port=5432)
+
+cur = conn.cursor()
+
+cur.execute("select min(stop_lat) from stage_stops")
+minlat = curr.fetchall()
+conn.commit()
+
+cur.execute("select max(stop_lat) from stage_stops")
+maxlat = curr.fetchall()
+conn.commit()
+
+cur.execute("select min(stop_lon) from stage_stops")
+minlong = curr.fetchall()
+conn.commit()
+
+cur.execute("select max(stop_lon) from stage_stops")
+maxlong = curr.fetchall()
+conn.commit()
+
+cur.close()
+conn.close()
+
+
+#%%
+
+# here we create a table in our database with all weather stations within coordinates of where router is operating:
+
+import psycopg2
+conn = psycopg2.connect(
+    host="ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com, dbname",
+    dbname = "team_csv", 
+    user = "student_helene", 
+    password="Gandalf!", 
+    port=5432)
+
+cur = conn.cursor()
+
+query = ("CREATE TABLE public.weather_station AS 
+            SELECT id, 
+            name, 
+            frost_long, 
+            frost_lat 
+        from stage_sources 
+        where (frost_lat between 59.42 and 60.55) and (frost_long between 10.10  and 11.87)")
+
+cur.execute(query)
+conn.commit()
+    
+cur.close()
+conn.close()   
+
+
+#%%
 # Here we connect ruter stops to its closest weather station using coordinates, and place them in a table for future reference:
 import psycopg2
 conn = psycopg2.connect(
@@ -266,8 +330,6 @@ conn.commit()
 cur.execute('select id from weather_station')
 frost_stationname  = (cur.fetchall())
 conn.commit()
-
-
 
 cur.execute('select stop_lon from stage_stops;')
 entur_long= (cur.fetchall())
@@ -305,34 +367,6 @@ for i in range(len(entur_long)):
     values = entur_stopname[i], ws_id
     cur.execute(query, values)
     conn.commit()
-    
-cur.close()
-conn.close()   
-
-#%%
-
-# here we create a table in our database with all weather stations within coordinates of where router is operating:
-
-import psycopg2
-conn = psycopg2.connect(
-    host="ds-etl-academy.cgbivchwjzle.eu-west-1.rds.amazonaws.com, dbname",
-    dbname = "team_csv", 
-    user = "student_helene", 
-    password="Gandalf!", 
-    port=5432)
-
-cur = conn.cursor()
-
-query = ("CREATE TABLE public.weather_station AS 
-            SELECT id, 
-            name, 
-            frost_long, 
-            frost_lat 
-        from stage_sources 
-        where (frost_lat between 59.42 and 60.55) and (frost_long between 10.10  and 11.87)")
-
-cur.execute(query)
-conn.commit()
     
 cur.close()
 conn.close()   
