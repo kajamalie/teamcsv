@@ -1,5 +1,4 @@
 --For starschema: 
-
 --Create and populate timedimention: 
 CREATE table star_times (
     id int4 NOT NULL,
@@ -30,7 +29,7 @@ SELECT
   to_char(datum, 'SSSS')::integer / 60 AS minute_of_day,
   to_char(datum, 'SSSS')::integer AS second_of_day,
   to_char(datum - (extract(minute FROM datum)::integer % 15 || 'minutes')::interval, 'hh24:mi') ||
-  ' – ' ||
+  ' ï¿½ ' ||
   to_char(datum - (extract(minute FROM datum)::integer % 15 || 'minutes')::interval + '14 minutes'::interval, 'hh24:mi')
     AS quarter_hour,
   to_char(datum, 'AM') AS am_pm,
